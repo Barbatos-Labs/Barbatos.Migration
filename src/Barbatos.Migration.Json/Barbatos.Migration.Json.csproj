@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.Json</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration.Json</RootNamespace>
+    <CommonTags>$(CommonTags);json;settings;configuration</CommonTags>
+    <Description>JSON data provider for Barbatos.Migration. Transforms settings and document files through the System.Text.Json DOM, with crash-safe atomic writes and reversible edits.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+  </ItemGroup>
+
+</Project>

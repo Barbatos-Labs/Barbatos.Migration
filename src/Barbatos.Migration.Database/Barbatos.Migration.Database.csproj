@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.Database</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration.Database</RootNamespace>
+    <CommonTags>$(CommonTags);database;sql;ado.net;sqlite;sqlserver;postgresql;mysql</CommonTags>
+    <Description>Relational database provider for Barbatos.Migration. Runs SQL migration scripts against any ADO.NET provider - SQLite, SQL Server, PostgreSQL, MySQL, Oracle - inside a transaction, with per-dialect handling of foreign keys, integrity checks and file locking. No database driver dependency of its own.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.Ini</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration.Ini</RootNamespace>
+    <CommonTags>$(CommonTags);ini;settings;configuration</CommonTags>
+    <Description>INI data provider for Barbatos.Migration. Reshapes INI settings files - renaming keys, moving them between sections, converting values - through a format-preserving document model that keeps the user's comments, key order and spacing intact.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+  </ItemGroup>
+
+</Project>

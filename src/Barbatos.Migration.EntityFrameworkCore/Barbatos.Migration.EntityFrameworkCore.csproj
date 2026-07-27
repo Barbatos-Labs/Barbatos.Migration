@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.EntityFrameworkCore</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration.EntityFrameworkCore</RootNamespace>
+    <CommonTags>$(CommonTags);entityframework;entityframeworkcore;efcore;orm</CommonTags>
+    <Description>Entity Framework Core provider for Barbatos.Migration. Runs EF Core's own migrations, and data transformations through a DbContext, inside the Barbatos snapshot/rollback pipeline - so a migration that fails halfway restores the whole data folder instead of leaving the database part-migrated.</Description>
+    <!-- EF Core migrations build and execute SQL at runtime, and EF Core annotates them as
+         incompatible with both trimming and NativeAOT. Anyone publishing that way should use a
+         migration bundle instead; there is nothing this package can do about it, so the
+         analyzers only produce noise here. -->
+    <IsTrimmable>false</IsTrimmable>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>false</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+    <!-- For IDatabaseDialect. EF Core changes the schema; the dialect is what releases the
+         file handle afterwards so the engine's rollback is not blocked by it. -->
+    <ProjectReference Include="..\Barbatos.Migration.Database\Barbatos.Migration.Database.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+</Project>

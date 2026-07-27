@@ -1,0 +1,82 @@
+<Project>
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Pham The Hung</Authors>
+    <Product>Barbatos.Migration</Product>
+    <CommonTags>dotnet;migration;upgrade;downgrade;versioning;data;schema;sqlite;json;rollback;backup;wpf;maui;unity</CommonTags>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>(c) 2026 Barbatos Labs | Pham The Hung and Barbatos.Migration Contributors. All rights reserved.</Copyright>
+    <Description>Part of Barbatos.Migration - a crash-safe data migration framework for client applications.</Description>
+    <PackageProjectUrl>https://github.com/Barbatos-Labs/Barbatos.Migration</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/Barbatos-Labs/Barbatos.Migration/releases</PackageReleaseNotes>
+    <!-- One icon for the whole family - see build/nuget.png. -->
+    <PackageIcon Condition="Exists('$(MSBuildThisFileDirectory)build\nuget.png')">Icon.png</PackageIcon>
+    <PackageIconSourceFile>nuget.png</PackageIconSourceFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CheckEolWorkloads>false</CheckEolWorkloads>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RepositoryDirectory>$(MSBuildThisFileDirectory)</RepositoryDirectory>
+    <BuildToolsDirectory>$(RepositoryDirectory)build\</BuildToolsDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsTestProject>$(MSBuildProjectName.Contains('Test'))</IsTestProject>
+    <IsCoreProject Condition="$(IsTestProject)">False</IsCoreProject>
+    <IsCoreProject Condition="'$(IsCoreProject)' == ''">True</IsCoreProject>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsPublishable>true</IsPublishable>
+    <ContinuousIntegrationBuild>$(TF_BUILD)</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="$(IsCoreProject)">
+      <PropertyGroup>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <IsPackable>false</IsPackable>
+        <IsPublishable>false</IsPublishable>
+        <NoWarn>$(NoWarn);CS8002;SA0001</NoWarn>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <!-- SourceLink needs a repository to describe; until this tree is a git checkout it only
+         produces warnings. -->
+    <SourceLinkEnabled Condition="'$(SourceLinkEnabled)' == '' AND !Exists('$(MSBuildThisFileDirectory).git')">false</SourceLinkEnabled>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(SourceLinkEnabled)' != 'false'">
+      <PropertyGroup>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+      </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+      </ItemGroup>
+    </When>
+  </Choose>
+</Project>

@@ -1,0 +1,85 @@
+<Project>
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageTags Condition="'$(PackageTags)' != ''">$(CommonTags);$(PackageTags)</PackageTags>
+    <PackageTags Condition="'$(PackageTags)' == ''">$(CommonTags)</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <DeterministicSourcePaths Condition="'$(SourceLinkEnabled)' == 'true'">true</DeterministicSourcePaths>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None
+      Include="$(BuildToolsDirectory)$(PackageIconSourceFile)"
+      Condition="Exists('$(BuildToolsDirectory)$(PackageIconSourceFile)')"
+      Pack="true"
+      PackagePath="\Icon.png"
+      Visible="False"
+    />
+    <None
+      Include="$(RepositoryDirectory)ThirdPartyNotices.txt"
+      Condition="Exists('$(RepositoryDirectory)ThirdPartyNotices.txt')"
+      Pack="true"
+      PackagePath="\"
+      Visible="False"
+    />
+    <None
+      Include="$(RepositoryDirectory)LICENSE.md"
+      Condition="Exists('$(RepositoryDirectory)LICENSE.md')"
+      Pack="true"
+      PackagePath="\LICENSE.md"
+      Visible="False"
+    />
+    <!-- Every package ships the repository README: one document describing the whole family,
+         rather than eight that repeat each other and drift apart. -->
+    <None
+      Include="$(RepositoryDirectory)README.md"
+      Pack="true"
+      PackagePath="\README.md"
+      Visible="False"
+    />
+  </ItemGroup>
+
+  <Target Name="AddCommitHashToAssemblyAttributes" BeforeTargets="GetAssemblyAttributes">
+    <ItemGroup>
+      <AssemblyAttribute
+        Include="System.Reflection.AssemblyMetadataAttribute"
+        Condition="'$(SourceRevisionId)' != ''"
+      >
+        <_Parameter1>CommitHash</_Parameter1>
+        <_Parameter2>$(SourceRevisionId)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+
+  <!-- Conditioned on being unset so an individual project can opt out - see
+       Barbatos.Migration.EntityFrameworkCore, where EF Core itself is not AOT-compatible. -->
+  <PropertyGroup Condition="'$(IsCoreProject)' == 'true' AND '$(UseWPF)' != 'true'">
+    <IsTrimmable Condition="'$(IsTrimmable)' == ''">true</IsTrimmable>
+    <EnableTrimAnalyzer Condition="'$(EnableTrimAnalyzer)' == ''">true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer Condition="'$(EnableAotAnalyzer)' == ''">true</EnableAotAnalyzer>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsCoreProject)' == 'true'">
+    <EnableSingleFileAnalyzer Condition="'$(EnableSingleFileAnalyzer)' == ''">true</EnableSingleFileAnalyzer>
+  </PropertyGroup>
+
+  <!-- Strong-name signing, as the rest of the Barbatos family does. Gated on SourceLinkEnabled
+       so that only release builds need the key: the CD workflow writes src\barbatos.snk from a
+       secret and passes -p:SourceLinkEnabled=true, while an ordinary `dotnet build` here needs
+       no key at all. The Exists() check means a release build without the secret fails loudly
+       at the signing step rather than quietly shipping unsigned assemblies. -->
+  <PropertyGroup Condition="'$(SourceLinkEnabled)' == 'true' AND '$(IsCoreProject)' == 'true'">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(RepositoryDirectory)src\barbatos.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+</Project>

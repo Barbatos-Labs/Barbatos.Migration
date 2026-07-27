@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.Wpf</PackageId>
+    <TargetFrameworks>net10.0-windows10.0.17763.0;net9.0-windows10.0.17763.0;net8.0-windows10.0.17763.0</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Barbatos.Migration.Wpf</RootNamespace>
+    <CommonTags>$(CommonTags);wpf;windows;desktop;splashscreen</CommonTags>
+    <Description>WPF integration for Barbatos.Migration. Wires the migration engine into Barbatos.Wpf's application host - data directory from IFileSystem, target version from AppInfo, first-launch detection from IVersionTracking - and marshals progress onto the UI thread for a splash screen.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The WPF SDK's implicit usings are a different set from the default one and leave these
+         two out. Declaring them here keeps the source files free of usings that every other
+         project in this repository gets for nothing. -->
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+    <ProjectReference Include="..\Barbatos.Migration.DependencyInjection\Barbatos.Migration.DependencyInjection.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Barbatos.Wpf.Core" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+</Project>

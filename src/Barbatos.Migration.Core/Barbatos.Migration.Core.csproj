@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.Core</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration</RootNamespace>
+    <CommonTags>$(CommonTags)</CommonTags>
+    <Description>The zero-dependency core of Barbatos.Migration: version planning, a crash-safe migration engine with journal-based recovery, snapshot/clone installation strategies, cooperative cancellation, compensating rollback and real-time progress reporting.</Description>
+  </PropertyGroup>
+
+</Project>

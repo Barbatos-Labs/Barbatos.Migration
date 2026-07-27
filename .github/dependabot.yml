@@ -1,0 +1,35 @@
+# Dependabot version updates.
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# The file has to be named exactly `dependabot.yml` and sit in `.github/` for GitHub to read it,
+# and every entry needs a real `package-ecosystem`.
+
+version: 2
+updates:
+  # NuGet versions all live in Directory.Packages.props (central package management), so one
+  # entry at the repository root covers every project.
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      # The Microsoft.Extensions.* and EF Core packages ship as one set on the same cadence;
+      # updating them together avoids a wave of PRs that only make sense merged as a group.
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+      entity-framework:
+        patterns:
+          - "Microsoft.EntityFrameworkCore*"
+      test-tooling:
+        patterns:
+          - "xunit*"
+          - "Microsoft.NET.Test.Sdk"
+          - "coverlet.*"
+          - "AwesomeAssertions"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

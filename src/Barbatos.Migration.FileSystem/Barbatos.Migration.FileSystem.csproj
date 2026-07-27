@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.FileSystem</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration.FileSystem</RootNamespace>
+    <CommonTags>$(CommonTags);filesystem;files;folders</CommonTags>
+    <Description>File system data provider for Barbatos.Migration. Restructures an application's data folder - moving, renaming, deleting and creating files and directories - as a reversible, cancellable migration step.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+  </ItemGroup>
+
+</Project>

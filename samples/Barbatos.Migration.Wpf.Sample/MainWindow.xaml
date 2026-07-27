@@ -1,0 +1,170 @@
+<Window
+    x:Class="Barbatos.Migration.Wpf.Sample.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Barbatos.Migration - upgrade &amp; downgrade playground"
+    Width="1040"
+    Height="720"
+    Background="White"
+    FontFamily="Segoe UI"
+    WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header  -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock
+                FontSize="22"
+                FontWeight="SemiBold"
+                Foreground="{StaticResource Ink}"
+                Text="Migration playground" />
+            <TextBlock
+                Margin="0,4,0,0"
+                Foreground="{StaticResource Muted}"
+                Text="Every button below runs the real engine against a sandbox data folder. Watch the file list and the log change - and watch them change back when a migration fails or is cancelled." />
+            <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                <TextBlock Foreground="{StaticResource Muted}" Text="Sandbox:" />
+                <TextBlock
+                    Margin="6,0,20,0"
+                    FontFamily="Consolas"
+                    Foreground="{StaticResource Ink}"
+                    Text="{Binding SandboxRoot}" />
+                <TextBlock Foreground="{StaticResource Muted}" Text="Data version:" />
+                <TextBlock
+                    Margin="6,0,0,0"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource Accent}"
+                    Text="{Binding DataVersion}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!--  Controls  -->
+        <Border
+            Grid.Row="1"
+            Padding="16,16,16,8"
+            Background="{StaticResource Surface}"
+            CornerRadius="8">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="INSTALLATION MODEL" />
+                <StackPanel Margin="0,0,0,14" Orientation="Horizontal">
+                    <RadioButton
+                        Margin="0,0,24,0"
+                        Content="In-place (one shared data folder — snapshot &amp; restore)"
+                        IsChecked="{Binding UseSideBySide, Converter={StaticResource InverseBool}}"
+                        IsEnabled="{Binding IsIdle}" />
+                    <RadioButton
+                        Content="Side-by-side (a folder per version — clone &amp; publish)"
+                        IsChecked="{Binding UseSideBySide}"
+                        IsEnabled="{Binding IsIdle}" />
+                </StackPanel>
+
+                <TextBlock Style="{StaticResource SectionHeader}" Text="ACTIONS" />
+                <WrapPanel>
+                    <Button
+                        Click="OnReset"
+                        Content="Reset to 1.0.0"
+                        IsEnabled="{Binding IsIdle}" />
+                    <Button
+                        Click="OnUpgrade"
+                        Content="Upgrade → 2.0.0"
+                        IsEnabled="{Binding IsIdle}" />
+                    <Button
+                        Click="OnDowngrade"
+                        Content="Downgrade → 1.0.0"
+                        IsEnabled="{Binding IsIdle}" />
+                    <Button
+                        Click="OnUpgradeAndFail"
+                        Content="Upgrade, then fail"
+                        Foreground="{StaticResource Danger}"
+                        IsEnabled="{Binding IsIdle}"
+                        ToolTip="The 2.0.0 step changes the database and then throws. The engine restores everything." />
+                    <Button
+                        Click="OnOpenFolder"
+                        Content="Open sandbox folder"
+                        IsEnabled="{Binding IsIdle}" />
+                    <Button
+                        Click="OnCancel"
+                        Content="Cancel"
+                        IsEnabled="{Binding IsRunning}" />
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <!--  Progress  -->
+        <StackPanel Grid.Row="2" Margin="0,16,0,16">
+            <ProgressBar
+                Height="8"
+                Background="{StaticResource Surface}"
+                BorderThickness="0"
+                Foreground="{StaticResource Accent}"
+                IsIndeterminate="{Binding IsIndeterminate}"
+                Maximum="100"
+                Value="{Binding Percentage, Mode=OneWay}" />
+            <TextBlock
+                Margin="0,8,0,0"
+                Foreground="{StaticResource Ink}"
+                Text="{Binding Status}" />
+        </StackPanel>
+
+        <!--  Data + log  -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Grid.Column="0">
+                <TextBlock
+                    DockPanel.Dock="Top"
+                    Style="{StaticResource SectionHeader}"
+                    Text="DATA FOLDER" />
+                <Border
+                    Background="{StaticResource Surface}"
+                    BorderBrush="#E1E6E7"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <ListBox
+                        Background="Transparent"
+                        BorderThickness="0"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        ItemsSource="{Binding Files}" />
+                </Border>
+            </DockPanel>
+
+            <DockPanel Grid.Column="2">
+                <TextBlock
+                    DockPanel.Dock="Top"
+                    Style="{StaticResource SectionHeader}"
+                    Text="ENGINE LOG" />
+                <Border
+                    Background="#1E1E1E"
+                    BorderThickness="0"
+                    CornerRadius="6">
+                    <ListBox
+                        x:Name="LogList"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        Foreground="#D4D4D4"
+                        ItemsSource="{Binding Log}">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Padding" Value="4,1" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Border>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</Window>

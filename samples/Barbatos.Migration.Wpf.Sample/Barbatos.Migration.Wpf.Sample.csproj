@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+
+    <!-- AppInfo.Version is what Barbatos.Migration.Wpf defaults TargetDataVersion to, so
+         bumping this is all it takes for a new step to become due. See "Defaults taken from
+         the host" in src/Barbatos.Migration.Wpf/README.md. -->
+    <Product>Barbatos.Migration Sample</Product>
+    <Company>Barbatos Labs</Company>
+    <Version>2.0.0</Version>
+    <Copyright>Copyright (c) 2026 Barbatos Labs</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The host. In your own app: dotnet add package Barbatos.Wpf.Core -->
+    <PackageReference Include="Barbatos.Wpf.Core" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- In your own app these are package references too:
+           dotnet add package Barbatos.Migration.Wpf
+           dotnet add package Barbatos.Migration.Json
+           dotnet add package Barbatos.Migration.Ini
+           dotnet add package Barbatos.Migration.Csv
+           dotnet add package Barbatos.Migration.FileSystem
+           dotnet add package Barbatos.Migration.Database -->
+    <ProjectReference Include="..\..\src\Barbatos.Migration.Wpf\Barbatos.Migration.Wpf.csproj" />
+    <ProjectReference Include="..\..\src\Barbatos.Migration.Json\Barbatos.Migration.Json.csproj" />
+    <ProjectReference Include="..\..\src\Barbatos.Migration.Ini\Barbatos.Migration.Ini.csproj" />
+    <ProjectReference Include="..\..\src\Barbatos.Migration.Csv\Barbatos.Migration.Csv.csproj" />
+    <ProjectReference Include="..\..\src\Barbatos.Migration.FileSystem\Barbatos.Migration.FileSystem.csproj" />
+    <ProjectReference Include="..\..\src\Barbatos.Migration.Database\Barbatos.Migration.Database.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Barbatos.Wpf.ApplicationModel.AppInfo.AppGuid" Value="{8E4C1F6A-2B7D-4E93-A5C8-3F1D9B0E7A24}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Barbatos.Wpf.Hosting" />
+    <!-- The WPF SDK's implicit usings leave these out; see src/Barbatos.Migration.Wpf. -->
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

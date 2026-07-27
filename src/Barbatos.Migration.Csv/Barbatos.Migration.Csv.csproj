@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Barbatos.Migration.Csv</PackageId>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+    <RootNamespace>Barbatos.Migration.Csv</RootNamespace>
+    <CommonTags>$(CommonTags);csv;tsv;table;data</CommonTags>
+    <Description>CSV data provider for Barbatos.Migration. Reshapes delimited data files - adding, renaming, splitting and dropping columns, and rewriting rows - through an RFC 4180 parser that preserves the file's delimiter, quoting style and line endings.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Barbatos.Migration.Core\Barbatos.Migration.Core.csproj" />
+  </ItemGroup>
+
+</Project>

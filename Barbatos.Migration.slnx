@@ -1,0 +1,42 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="API-REFERENCE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE.md" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="ThirdPartyNotices.txt" />
+    <File Path="docs/DESIGN.md" />
+  </Folder>
+  <Folder Name="/Solution Items/.github/">
+    <File Path=".github/FUNDING.yml" />
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/workflows/barbatos-migration-ci.yml" />
+    <File Path=".github/workflows/barbatos-migration-cd-nuget.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Barbatos.Migration.Core/Barbatos.Migration.Core.csproj" />
+    <Project Path="src/Barbatos.Migration.Csv/Barbatos.Migration.Csv.csproj" />
+    <Project Path="src/Barbatos.Migration.Database/Barbatos.Migration.Database.csproj" />
+    <Project Path="src/Barbatos.Migration.DependencyInjection/Barbatos.Migration.DependencyInjection.csproj" />
+    <Project Path="src/Barbatos.Migration.EntityFrameworkCore/Barbatos.Migration.EntityFrameworkCore.csproj" />
+    <Project Path="src/Barbatos.Migration.FileSystem/Barbatos.Migration.FileSystem.csproj" />
+    <Project Path="src/Barbatos.Migration.Ini/Barbatos.Migration.Ini.csproj" />
+    <Project Path="src/Barbatos.Migration.Json/Barbatos.Migration.Json.csproj" />
+    <Project Path="src/Barbatos.Migration.Wpf/Barbatos.Migration.Wpf.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Barbatos.Migration.Wpf.Sample/Barbatos.Migration.Wpf.Sample.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Barbatos.Migration.Core.UnitTests/Barbatos.Migration.Core.UnitTests.csproj" />
+    <Project Path="tests/Barbatos.Migration.DependencyInjection.UnitTests/Barbatos.Migration.DependencyInjection.UnitTests.csproj" />
+    <Project Path="tests/Barbatos.Migration.EntityFrameworkCore.UnitTests/Barbatos.Migration.EntityFrameworkCore.UnitTests.csproj" />
+    <Project Path="tests/Barbatos.Migration.Wpf.UnitTests/Barbatos.Migration.Wpf.UnitTests.csproj" />
+  </Folder>
+</Solution>
