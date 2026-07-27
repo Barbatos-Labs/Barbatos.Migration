@@ -15,7 +15,7 @@ jobs:
     # locking and directory-rename behaviour the engine is built around is the Windows one -
     # testing it anywhere else would test the easy case.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
