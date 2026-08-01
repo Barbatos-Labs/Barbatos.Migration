@@ -71,9 +71,42 @@ internal static class StrategySupport
             source,
             target,
             size,
-            new Progress<double>(percent => Report(progress, phase, percent, $"{message} {percent:F0}%")),
+            progress == null ? null : new PhaseProgress(progress, phase, message),
             cancellationToken);
 
         Report(progress, phase, 100, message);
+    }
+
+    /// <summary>
+    /// Rescales the copy's 0-100 into a phase report, synchronously.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not a <see cref="Progress{T}"/>. That class posts through the captured
+    /// <see cref="SynchronizationContext"/>, so its callbacks arrive on another thread after an
+    /// unbounded delay - which here means after <see cref="ProgressRelay.Offset"/> and
+    /// <see cref="ProgressRelay.Span"/> have already been moved on to a later phase, and a
+    /// report from the snapshot gets rescaled into the migration's slice of the bar. On a caller
+    /// that runs the engine on its UI thread it is worse still: the whole copy blocks that
+    /// thread, so not one queued callback runs until the copy has finished.
+    /// </remarks>
+    private sealed class PhaseProgress : IProgress<double>
+    {
+        private readonly IProgress<MigrationProgress> _inner;
+        private readonly MigrationPhase _phase;
+        private readonly string _message;
+
+        public PhaseProgress(IProgress<MigrationProgress> inner, MigrationPhase phase, string message)
+        {
+            _inner = inner;
+            _phase = phase;
+            _message = message;
+        }
+
+        public void Report(double percentage) =>
+            StrategySupport.Report(
+                _inner,
+                _phase,
+                percentage,
+                string.Format(CultureInfo.CurrentCulture, "{0} {1:F0}%", _message, percentage));
     }
 }

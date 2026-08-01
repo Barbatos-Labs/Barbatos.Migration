@@ -24,8 +24,8 @@ internal static class PathGuard
             throw new ArgumentException("A path is required.", nameof(path));
 
         string full = Path.GetFullPath(path);
-        if (full.Length > 3 && (full[full.Length - 1] == Path.DirectorySeparatorChar || full[full.Length - 1] == Path.AltDirectorySeparatorChar))
-            full = full.Substring(0, full.Length - 1);
+        if (full.Length > 3 && (full[^1] == Path.DirectorySeparatorChar || full[^1] == Path.AltDirectorySeparatorChar))
+            full = full[..^1];
 
         return full;
     }

@@ -55,28 +55,8 @@ public sealed class MigrationLockException : MigrationException
     }
 }
 
-/// <summary>
-/// Thrown when a rollback fails. The data directory may be in an inconsistent state, and
-/// <see cref="BackupDirectory"/> - which the engine deliberately leaves on disk in this case -
-/// holds the last known-good copy.
-/// </summary>
-public sealed class MigrationRollbackException : MigrationException
-{
-    /// <summary>Creates the exception with a message, the surviving backup and the causes.</summary>
-    public MigrationRollbackException(string message, string? backupDirectory, Exception? originalError, Exception? rollbackError)
-        : base(message, rollbackError ?? originalError)
-    {
-        BackupDirectory = backupDirectory;
-        OriginalError = originalError;
-        RollbackError = rollbackError;
-    }
-
-    /// <summary>The snapshot that was not restored, and which is now the user's only intact copy.</summary>
-    public string? BackupDirectory { get; }
-
-    /// <summary>The failure that triggered the rollback, if the rollback was not caused by a cancellation.</summary>
-    public Exception? OriginalError { get; }
-
-    /// <summary>The failure that broke the rollback itself.</summary>
-    public Exception? RollbackError { get; }
-}
+// A failed rollback is deliberately not an exception. RunAsync returns
+// MigrationOutcome.RollbackFailed with MigrationResult.RollbackError and
+// MigrationResult.BackupDirectory filled in, because the one case where the application most
+// needs to make a considered decision - tell the user where their data is, refuse to start
+// normally - is the worst possible case to express as something a caller can forget to catch.

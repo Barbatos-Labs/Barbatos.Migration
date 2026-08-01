@@ -69,7 +69,7 @@ public sealed class FileMigrationLock : IMigrationLock
             byte[] owner = Encoding.UTF8.GetBytes(string.Format(
                 CultureInfo.InvariantCulture,
                 "pid={0} started={1:O}",
-                GetCurrentProcessId(),
+                Environment.ProcessId,
                 DateTimeOffset.UtcNow));
 
             stream.Write(owner, 0, owner.Length);
@@ -85,15 +85,5 @@ public sealed class FileMigrationLock : IMigrationLock
         {
             return null;
         }
-    }
-
-    private static int GetCurrentProcessId()
-    {
-#if NET8_0_OR_GREATER
-        return Environment.ProcessId;
-#else
-        using System.Diagnostics.Process process = System.Diagnostics.Process.GetCurrentProcess();
-        return process.Id;
-#endif
     }
 }

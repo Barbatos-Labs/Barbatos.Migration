@@ -52,8 +52,6 @@ internal sealed class ProgressRelay : IProgress<MigrationProgress>
     /// <inheritdoc cref="MigrationProgress.TargetVersion" />
     public Version? TargetVersion { get; set; }
 
-    public bool IsIndeterminate { get; set; }
-
     /// <inheritdoc />
     public void Report(MigrationProgress value)
     {
@@ -80,7 +78,7 @@ internal sealed class ProgressRelay : IProgress<MigrationProgress>
             value.StepDescription.Length > 0 ? value.StepDescription : StepDescription,
             value.ProviderName.Length > 0 ? value.ProviderName : ProviderName,
             value.TargetVersion ?? TargetVersion,
-            IsIndeterminate || value.IsIndeterminate));
+            value.IsIndeterminate));
     }
 
     /// <summary>Emits a report the engine composes itself, bypassing the rescale.</summary>
@@ -94,7 +92,7 @@ internal sealed class ProgressRelay : IProgress<MigrationProgress>
                 _highWaterMark = overallPercentage;
         }
 
-        Emit(new MigrationProgress(phase, overallPercentage, detail, StepDescription, ProviderName, TargetVersion, IsIndeterminate));
+        Emit(new MigrationProgress(phase, overallPercentage, detail, StepDescription, ProviderName, TargetVersion, isIndeterminate: false));
     }
 
     /// <summary>Emits a terminal report, ignoring the high-water mark.</summary>

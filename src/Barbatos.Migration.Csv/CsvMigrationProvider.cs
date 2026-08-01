@@ -159,6 +159,10 @@ public class CsvMigrationProvider : IMigrationProvider
             throw new MigrationException($"'{path}' cannot be migrated. {ex.Message}", ex);
         }
 
+        // Create() always starts a document with a header, which is right for the common case
+        // but not for a provider that was told this file has none.
+        document.HasHeader = HasHeader;
+
         document.QuoteStyle = QuoteStyle;
 
         progress?.Report(new MigrationProgress(5, $"Transforming {_relativePath}"));

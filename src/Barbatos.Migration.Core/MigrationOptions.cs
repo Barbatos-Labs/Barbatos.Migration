@@ -182,7 +182,7 @@ public sealed class MigrationOptions
                 "Set MigrationOptions.BackupRootDirectory explicitly.");
         }
 
-        return Path.Combine(parent!, ".migration");
+        return Path.Combine(parent, ".migration");
     }
 }
 

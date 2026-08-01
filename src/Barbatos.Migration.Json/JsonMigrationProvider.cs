@@ -140,22 +140,38 @@ public class JsonMigrationProvider : IMigrationProvider
     /// How the document is written back.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The encoder matters more than it looks. <see cref="System.Text.Json"/> escapes every
     /// non-ASCII character by default, which is right for embedding JSON in a web page and wrong
     /// for a settings file on disk: a migration that renamed one key would turn every line of
     /// <c>"Xin chào {0}"</c> into <c>"Xin chào {0}"</c>. Still valid JSON, still the same
     /// value - and a file the user can no longer read or hand-edit, changed by an update they
     /// did not ask for it. The relaxed encoder leaves the text as the user wrote it.
+    /// </para>
+    /// <para>
+    /// Both variants are created once and shared. A <see cref="JsonSerializerOptions"/> carries
+    /// the serializer's type-metadata cache, so a fresh instance per write is not just an
+    /// allocation - it throws that cache away and makes the run rebuild it every time.
+    /// </para>
     /// </remarks>
-    private JsonSerializerOptions SerializerOptions() => new()
+    private static readonly JsonSerializerOptions IndentedOptions = new()
     {
-        WriteIndented = WriteIndented,
+        WriteIndented = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
+    /// <inheritdoc cref="IndentedOptions" />
+    private static readonly JsonSerializerOptions CompactOptions = new()
+    {
+        WriteIndented = false,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    private JsonSerializerOptions SerializerOptions() => WriteIndented ? IndentedOptions : CompactOptions;
+
     private static JsonObject Parse(string text, string path)
     {
-        if (text.Trim().Length == 0)
+        if (string.IsNullOrWhiteSpace(text))
             return new JsonObject(NodeOptions);
 
         JsonNode? node;

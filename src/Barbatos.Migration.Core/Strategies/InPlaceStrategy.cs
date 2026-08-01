@@ -65,7 +65,16 @@ public sealed class InPlaceStrategy : IInstallationStrategy
         string snapshot = Path.Combine(backupRoot, SnapshotPrefix + context.SessionId);
 
         context.SetWorkingDirectory(data);
-        context.SetBackupDirectory(snapshot);
+
+        // Deliberately left null until the copy has finished. BackupDirectory is what the
+        // engine's rollback restores from, and a half-written snapshot is not a copy of the
+        // data - it is a fragment of it. Announcing it before it is complete means an
+        // interrupted copy (the user pressing Cancel, the disk filling, a scanner locking one
+        // file) is followed by a "rollback" that swaps that fragment over a data directory no
+        // provider has touched yet, destroying the very data the snapshot was being taken to
+        // protect. Nothing has been modified at this point, so the correct response to a failed
+        // preparation is to restore nothing at all.
+        context.SetBackupDirectory(null);
 
         Directory.CreateDirectory(data);
         DirectoryOperations.Delete(snapshot);
@@ -77,7 +86,20 @@ public sealed class InPlaceStrategy : IInstallationStrategy
             MigrationLogLevel.Information,
             $"Snapshotting {StrategySupport.FormatSize(size)} from '{data}' to '{snapshot}'.");
 
-        StrategySupport.CopyWithProgress(data, snapshot, size, MigrationPhase.Preparing, "Backing up your data...", progress, cancellationToken);
+        try
+        {
+            StrategySupport.CopyWithProgress(data, snapshot, size, MigrationPhase.Preparing, "Backing up your data...", progress, cancellationToken);
+        }
+        catch
+        {
+            // The fragment is of no use to anyone and would otherwise sit in the backup root
+            // until something else happened to clear it.
+            DirectoryOperations.TryDelete(snapshot, context.Logger);
+            throw;
+        }
+
+        // Complete, and only now safe to restore from.
+        context.SetBackupDirectory(snapshot);
         return Task.CompletedTask;
     }
 
@@ -101,13 +123,19 @@ public sealed class InPlaceStrategy : IInstallationStrategy
 
         // Renaming the snapshot out of the "in-flight" namespace is what promotes it from
         // "restore this if we crash" to "the user's safety net for the next few days".
+        //
+        // UTC, not local time: PruneRetainedBackups keeps the newest N by sorting these names,
+        // which only tracks the real order if the timestamps advance monotonically. Local time
+        // does not - it goes backwards by an hour every autumn, and a backup taken in that hour
+        // would sort as older than one taken before it and be pruned first, so the copy the user
+        // is most likely to want back is the one that gets deleted.
         string retained = Path.Combine(
             _options.BackupRootDirectory,
             string.Format(
                 CultureInfo.InvariantCulture,
                 "{0}{1:yyyyMMdd-HHmmss}-v{2}",
                 RetainedPrefix,
-                DateTime.Now,
+                DateTime.UtcNow,
                 context.CurrentDataVersion));
 
         try

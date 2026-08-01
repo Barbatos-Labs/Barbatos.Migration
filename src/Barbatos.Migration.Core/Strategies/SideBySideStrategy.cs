@@ -86,18 +86,23 @@ public sealed class SideBySideStrategy : IInstallationStrategy
     /// <inheritdoc />
     public Task PrepareAsync(MigrationContext context, IProgress<MigrationProgress>? progress, CancellationToken cancellationToken)
     {
-        string backupRoot = DirectoryOperations.Ensure(_options.BackupRootDirectory);
-        string staging = Path.Combine(backupRoot, StagingPrefix + context.SessionId);
+        string staging = Path.Combine(PathGuard.Normalize(_options.BackupRootDirectory), StagingPrefix + context.SessionId);
 
-        DirectoryOperations.Delete(staging);
-        Directory.CreateDirectory(staging);
-
+        // Pointed at the staging clone before anything that can throw, because the rollback
+        // deletes whatever WorkingDirectory names. It starts out as the previous version's
+        // directory, so a preparation that failed before this line would have the cleanup
+        // delete the very data this model exists to leave alone.
         context.SetWorkingDirectory(staging);
 
         // No snapshot: the source directory is left untouched for the whole run, so it *is*
         // the backup. Reporting null here is what tells the engine's rollback path that there
         // is nothing to restore.
         context.SetBackupDirectory(null);
+
+        string backupRoot = DirectoryOperations.Ensure(_options.BackupRootDirectory);
+
+        DirectoryOperations.Delete(staging);
+        Directory.CreateDirectory(staging);
 
         string source = PathGuard.Normalize(context.OriginalDirectory);
         if (!DirectoryOperations.HasContent(source) || PathGuard.AreSame(source, staging))
@@ -145,7 +150,21 @@ public sealed class SideBySideStrategy : IInstallationStrategy
 
         // The entire rollback. The previous version's directory was never written to, so
         // "restoring" it is a no-op and the user can go straight back to the old build.
-        DirectoryOperations.TryDelete(context.WorkingDirectory, context.Logger);
+        //
+        // The guard states that invariant rather than assuming it: this model never writes to
+        // the directory it cloned from, so there is no sequence of events in which deleting it
+        // is the right thing to do, and a cleanup that reached for it would be destroying the
+        // user's only copy.
+        if (!PathGuard.AreSame(context.WorkingDirectory, context.OriginalDirectory))
+        {
+            DirectoryOperations.TryDelete(context.WorkingDirectory, context.Logger);
+        }
+        else
+        {
+            context.Logger.Log(
+                MigrationLogLevel.Information,
+                $"Nothing to clean up - the run failed before it had a staging clone, so '{context.OriginalDirectory}' was never touched.");
+        }
 
         context.Logger.Log(
             MigrationLogLevel.Information,
@@ -194,12 +213,22 @@ public sealed class SideBySideStrategy : IInstallationStrategy
         return Task.CompletedTask;
     }
 
-    private KeyValuePair<Version, string>? FindNewestInstalledVersion(string root, Version upperBound)
+    /// <summary>
+    /// The newest installed version directory at or below <paramref name="upperBound"/>, or
+    /// <see langword="null"/> when there is none.
+    /// </summary>
+    /// <remarks>
+    /// A single pass keeping the running maximum, rather than collecting every candidate and
+    /// sorting: only the largest is ever wanted, and the version-directory check is the cheap
+    /// part next to the <see cref="DirectoryOperations.HasContent"/> probe it guards.
+    /// </remarks>
+    private static KeyValuePair<Version, string>? FindNewestInstalledVersion(string root, Version upperBound)
     {
         if (!Directory.Exists(root))
             return null;
 
-        List<KeyValuePair<Version, string>> candidates = [];
+        Version? newest = null;
+        string? newestDirectory = null;
 
         foreach (string directory in Directory.EnumerateDirectories(root))
         {
@@ -212,15 +241,15 @@ public sealed class SideBySideStrategy : IInstallationStrategy
                 continue;
             if (version > upperBound)
                 continue;
+            if (newest != null && version <= newest)
+                continue;
             if (!DirectoryOperations.HasContent(directory))
                 continue;
 
-            candidates.Add(new KeyValuePair<Version, string>(version, directory));
+            newest = version;
+            newestDirectory = directory;
         }
 
-        if (candidates.Count == 0)
-            return null;
-
-        return candidates.OrderByDescending(pair => pair.Key).First();
+        return newest == null ? null : new KeyValuePair<Version, string>(newest, newestDirectory!);
     }
 }

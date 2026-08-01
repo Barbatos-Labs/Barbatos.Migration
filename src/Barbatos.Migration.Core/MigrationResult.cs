@@ -144,10 +144,7 @@ public sealed class MigrationResult
 
     /// <inheritdoc />
     public override string ToString() =>
-        $"{Outcome}: {FormatVersion(FromVersion)} -> {FormatVersion(CurrentVersion)} " +
-        $"({AppliedSteps.Count} step(s), {Duration.TotalSeconds:F1}s)";
-
-    private static string FormatVersion(Version version) => version.ToString();
+        $"{Outcome}: {FromVersion} -> {CurrentVersion} ({AppliedSteps.Count} step(s), {Duration.TotalSeconds:F1}s)";
 }
 
 /// <summary>

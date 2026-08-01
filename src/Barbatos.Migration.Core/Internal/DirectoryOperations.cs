@@ -73,17 +73,11 @@ internal static class DirectoryOperations
         IProgress<double>? progress,
         CancellationToken cancellationToken)
     {
-        long copied = 0;
-        CopyCore(source, target, totalBytes, ref copied, progress, cancellationToken);
+        CopyState state = new(totalBytes, progress);
+        CopyCore(source, target, state, cancellationToken);
     }
 
-    private static void CopyCore(
-        string source,
-        string target,
-        long totalBytes,
-        ref long copiedBytes,
-        IProgress<double>? progress,
-        CancellationToken cancellationToken)
+    private static void CopyCore(string source, string target, CopyState state, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(target);
 
@@ -106,15 +100,58 @@ internal static class DirectoryOperations
             // A copied read-only file would block the restore that overwrites it later.
             ClearReadOnly(destination);
 
-            copiedBytes += length;
-            if (progress != null && totalBytes > 0)
-                progress.Report(Math.Min(100.0, copiedBytes * 100.0 / totalBytes));
+            state.Advance(length);
         }
 
         foreach (string directory in Directory.EnumerateDirectories(source))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            CopyCore(directory, Path.Combine(target, Path.GetFileName(directory)), totalBytes, ref copiedBytes, progress, cancellationToken);
+            CopyCore(directory, Path.Combine(target, Path.GetFileName(directory)), state, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Tracks how much of a tree has been copied and decides when that is worth reporting.
+    /// </summary>
+    /// <remarks>
+    /// A report per file is the obvious implementation and the wrong one: a data directory of a
+    /// hundred thousand small files produces a hundred thousand reports, each one formatting a
+    /// string and walking the whole progress chain out to the UI, for a bar that cannot render
+    /// more than a few dozen distinct positions per second anyway. Reporting only when the
+    /// figure has actually moved by <see cref="MinimumPercentageDelta"/> keeps the bar exactly as
+    /// smooth while making the reporting cost proportional to the bar rather than to the file
+    /// count: at most 200 reports for the whole copy, however many files it moves. The final
+    /// report is emitted by the caller, so a copy that ends mid-step still finishes at 100.
+    /// </remarks>
+    private sealed class CopyState
+    {
+        private const double MinimumPercentageDelta = 0.5;
+
+        private readonly long _totalBytes;
+        private readonly IProgress<double>? _progress;
+
+        private long _copiedBytes;
+        private double _lastReported = -1;
+
+        public CopyState(long totalBytes, IProgress<double>? progress)
+        {
+            _totalBytes = totalBytes;
+            _progress = progress;
+        }
+
+        public void Advance(long bytes)
+        {
+            _copiedBytes += bytes;
+
+            if (_progress == null || _totalBytes <= 0)
+                return;
+
+            double percentage = Math.Min(100.0, _copiedBytes * 100.0 / _totalBytes);
+            if (percentage - _lastReported < MinimumPercentageDelta)
+                return;
+
+            _lastReported = percentage;
+            _progress.Report(percentage);
         }
     }
 

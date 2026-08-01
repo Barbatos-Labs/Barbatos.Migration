@@ -59,9 +59,13 @@ public abstract class MigrationStepBase : IMigrationStep
 
     /// <inheritdoc />
     /// <remarks>
-    /// Built once, on first use. A step that never runs - because the user is already past its
-    /// version - never constructs its providers at all, which matters when a provider opens a
-    /// connection or reads a file just to exist.
+    /// Built once, on first use - which in practice is when the <see cref="MigrationEngine"/> is
+    /// constructed, since validating the step set has to look at every step's providers to reject
+    /// an empty one. So <see cref="CreateProviders"/> runs for every registered step whether or
+    /// not that step is due, and it must not do anything a step that will never run should not
+    /// do: describe the work here, and open connections and read files inside
+    /// <see cref="IMigrationProvider.UpAsync"/> where the engine's snapshot already protects
+    /// them.
     /// </remarks>
     public IReadOnlyList<IMigrationProvider> Providers => _providers ??= BuildProviders();
 

@@ -54,6 +54,18 @@ public sealed class CsvDocument
     private readonly List<string> _columns = [];
     private readonly List<CsvRow> _rows = [];
 
+    /// <summary>
+    /// Column name to position, rebuilt whenever the header changes.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="CsvRow"/>'s by-name indexer goes through <see cref="IndexOf"/>, and a
+    /// migration over a large file calls it once per column per row - the hundred-thousand-row
+    /// case this class exists for turns a linear scan of the header into millions of string
+    /// comparisons for work that is one dictionary lookup. Column edits are rare and the header
+    /// is short, so rebuilding the map on each of them costs nothing next to what it saves.
+    /// </remarks>
+    private Dictionary<string, int>? _columnIndex;
+
     private CsvDocument(char delimiter, string newLine, bool hasHeader)
     {
         Delimiter = delimiter;
@@ -93,6 +105,7 @@ public sealed class CsvDocument
         };
 
         document._columns.AddRange(columns ?? throw new ArgumentNullException(nameof(columns)));
+        document.InvalidateColumnIndex();
         return document;
     }
 
@@ -119,6 +132,7 @@ public sealed class CsvDocument
         if (hasHeader)
         {
             document._columns.AddRange(records[0].Select(field => field.Value));
+            document.InvalidateColumnIndex();
             start = 1;
         }
 
@@ -129,27 +143,34 @@ public sealed class CsvDocument
     }
 
     /// <summary>Renders the document back to text.</summary>
+    /// <remarks>
+    /// A document with nothing in it renders as nothing. The distinction matters because an
+    /// empty <c>.csv</c> is an ordinary thing to find in a data folder - a user who has not
+    /// created any records yet - and treating "has a header row" as "has written something"
+    /// would give that file a line break it never had, so a migration that changed nothing about
+    /// it would still come back having edited it.
+    /// </remarks>
     public string ToCsvString()
     {
         StringBuilder builder = new();
-        bool first = true;
+        bool wroteRecord = false;
 
-        if (HasHeader)
+        if (HasHeader && _columns.Count > 0)
         {
             AppendRecord(builder, _columns.Select(name => new CsvField(name, wasQuoted: false)));
-            first = false;
+            wroteRecord = true;
         }
 
         foreach (CsvRow row in _rows)
         {
-            if (!first)
+            if (wroteRecord)
                 builder.Append(NewLine);
 
             AppendRecord(builder, row.Fields);
-            first = false;
+            wroteRecord = true;
         }
 
-        if (EndsWithNewLine && (!first || HasHeader))
+        if (wroteRecord && EndsWithNewLine)
             builder.Append(NewLine);
 
         return builder.ToString();
@@ -161,8 +182,14 @@ public sealed class CsvDocument
     // ---------------------------------------------------------------- columns
 
     /// <summary>The index of <paramref name="column"/>, or <c>-1</c> when it is absent.</summary>
-    public int IndexOf(string column) =>
-        _columns.FindIndex(name => string.Equals(name, column, StringComparison.OrdinalIgnoreCase));
+    public int IndexOf(string column)
+    {
+        if (column == null)
+            return -1;
+
+        Dictionary<string, int> index = _columnIndex ??= BuildColumnIndex();
+        return index.TryGetValue(column, out int at) ? at : -1;
+    }
 
     /// <summary>Whether the document has a column called <paramref name="column"/>.</summary>
     public bool ContainsColumn(string column) => IndexOf(column) >= 0;
@@ -185,6 +212,7 @@ public sealed class CsvDocument
         at = at < 0 ? 0 : at > _columns.Count ? _columns.Count : at;
 
         _columns.Insert(at, column);
+        InvalidateColumnIndex();
 
         foreach (CsvRow row in _rows)
             row.InsertField(at, value == null ? string.Empty : value(row));
@@ -206,6 +234,8 @@ public sealed class CsvDocument
             return this;
 
         _columns.RemoveAt(at);
+        InvalidateColumnIndex();
+
         foreach (CsvRow row in _rows)
             row.RemoveField(at);
 
@@ -220,7 +250,10 @@ public sealed class CsvDocument
 
         int at = IndexOf(from);
         if (at >= 0)
+        {
             _columns[at] = to;
+            InvalidateColumnIndex();
+        }
 
         return this;
     }
@@ -241,6 +274,7 @@ public sealed class CsvDocument
         string name = _columns[from];
         _columns.RemoveAt(from);
         _columns.Insert(to, name);
+        InvalidateColumnIndex();
 
         foreach (CsvRow row in _rows)
             row.MoveField(from, to);
@@ -302,6 +336,8 @@ public sealed class CsvDocument
             }
 
             _columns.Insert(targetIndex, target);
+            InvalidateColumnIndex();
+
             for (int r = 0; r < _rows.Count; r++)
                 _rows[r].InsertField(targetIndex, Value(values[r], t));
         }
@@ -411,6 +447,27 @@ public sealed class CsvDocument
     }
 
     // ---------------------------------------------------------------- internals
+
+    /// <summary>
+    /// Maps each column name to its position, first occurrence winning - a duplicated header
+    /// name resolves to the leftmost column, which is what a linear search did and what every
+    /// spreadsheet does.
+    /// </summary>
+    private Dictionary<string, int> BuildColumnIndex()
+    {
+        Dictionary<string, int> index = new(_columns.Count, StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < _columns.Count; i++)
+        {
+            if (_columns[i] != null)
+                index.TryAdd(_columns[i], i);
+        }
+
+        return index;
+    }
+
+    /// <summary>Drops the cached column index after the header has changed shape.</summary>
+    private void InvalidateColumnIndex() => _columnIndex = null;
 
     internal void RequireHeader()
     {

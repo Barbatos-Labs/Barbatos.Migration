@@ -52,25 +52,38 @@ jobs:
         with:
           user: phamhung
 
-      - name: Remove samples and tests from solution
-        run: |
-          $slnx = Get-Content Barbatos.Migration.slnx -Raw
-          $slnx = $slnx -replace '(?s)\s*<Folder Name="/samples/">.*?</Folder>', '' -replace '(?s)\s*<Folder Name="/tests/">.*?</Folder>', ''
-          Set-Content -Path Barbatos.Migration.slnx -Value $slnx
-
       - name: Install dependencies
         run: dotnet restore
 
       # The tests are the reason to trust a release of this library at all, so they run before
       # anything is pushed - a data-migration package that ships without them passing is not
       # worth the disk it occupies.
+      #
+      # They run here, while the test projects are still in the solution. Stripping them out
+      # first and then calling `dotnet test` on what is left finds no test projects at all and
+      # exits successfully, which is the one way this step could fail to do its job without
+      # anybody noticing.
       - name: Test
         run: dotnet test --configuration Release
 
+      # Only the packable projects go into the release build, so a sample or a test project
+      # cannot contribute to what is pushed.
+      - name: Remove samples and tests from solution
+        run: |
+          $slnx = Get-Content Barbatos.Migration.slnx -Raw
+          $slnx = $slnx -replace '(?s)\s*<Folder Name="/samples/">.*?</Folder>', '' -replace '(?s)\s*<Folder Name="/tests/">.*?</Folder>', ''
+          Set-Content -Path Barbatos.Migration.slnx -Value $slnx
+
+      - name: Restore the release solution
+        run: dotnet restore
+
       # SourceLinkEnabled=true is also what turns on strong-name signing - see
-      # Directory.Build.targets.
+      # Directory.Build.targets. --no-incremental because the test run above has already built
+      # these projects unsigned: this is the one build whose output is published, so it is worth
+      # three minutes to know it was produced from scratch with the key in place rather than
+      # trusting MSBuild's up-to-date check to notice that the signing property changed.
       - name: Build
-        run: dotnet build --configuration Release --no-restore -p:SourceLinkEnabled=true
+        run: dotnet build --configuration Release --no-restore --no-incremental -p:SourceLinkEnabled=true
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build -p:SourceLinkEnabled=true

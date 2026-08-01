@@ -65,8 +65,13 @@ internal static class EfCoreConnectionRelease
             if (connection.State == System.Data.ConnectionState.Open)
                 await dialect.FinishAsync(connection, options, CancellationToken.None).ConfigureAwait(false);
         }
-        catch (DbException ex)
+        catch (Exception ex)
         {
+            // Every caller invokes this from a finally block, so an exception escaping here would
+            // replace whatever failure sent them there - and a provider that threw would be
+            // reported as "the dialect could not run PRAGMA foreign_keys" instead of as the real
+            // cause. A dialect that cannot tidy up is worth a line in the log and nothing more:
+            // the handle-releasing work below is what actually has to happen, and it still does.
             logger.Log(MigrationLogLevel.Debug, $"The {dialect.Name} dialect could not finish cleanly.", ex);
         }
 

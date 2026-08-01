@@ -293,7 +293,7 @@ public sealed class MigrationEngine
 
             // Deliberately not passing the token: abandoning a run at the commit boundary
             // would throw away all the work for no safety benefit.
-            await strategy.CommitAsync(context, applied.Select(step => step.Id).ToList(), relay).ConfigureAwait(false);
+            await strategy.CommitAsync(context, [.. applied.Select(step => step.Id)], relay).ConfigureAwait(false);
 
             _journal.Clear();
 
@@ -414,7 +414,7 @@ public sealed class MigrationEngine
             MigrationJournalEntry rollingBack = new(
                 context.SessionId, DateTimeOffset.UtcNow, _options.Model, context.Direction,
                 current, target, context.OriginalDirectory, context.WorkingDirectory,
-                context.BackupDirectory, MigrationPhase.RollingBack, applied.Count > 0 ? applied[applied.Count - 1].Id : null);
+                context.BackupDirectory, MigrationPhase.RollingBack, applied.Count > 0 ? applied[^1].Id : null);
             _journal.Write(rollingBack);
 
             await strategy.RollbackAsync(context, failure, relay).ConfigureAwait(false);

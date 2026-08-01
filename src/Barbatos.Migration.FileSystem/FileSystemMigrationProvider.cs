@@ -44,6 +44,11 @@ public class FileSystemMigrationProvider : IMigrationProvider
             throw new ArgumentException($"'{name}' declares no file system operations.", nameof(configure));
 
         Name = name;
+
+        // The operation list is fixed once the builder has run, so reversibility is a fact about
+        // this provider rather than a question to re-answer. The engine asks it for every
+        // provider in a plan before it takes the snapshot.
+        CanDown = _operations.TrueForAll(operation => operation.IsReversible);
     }
 
     /// <inheritdoc />
@@ -53,19 +58,7 @@ public class FileSystemMigrationProvider : IMigrationProvider
     public virtual double Weight => 1.0;
 
     /// <inheritdoc />
-    public bool CanDown
-    {
-        get
-        {
-            foreach (FileSystemOperation operation in _operations)
-            {
-                if (!operation.IsReversible)
-                    return false;
-            }
-
-            return true;
-        }
-    }
+    public bool CanDown { get; }
 
     /// <inheritdoc />
     public Task UpAsync(IMigrationContext context, IProgress<MigrationProgress>? progress, CancellationToken cancellationToken)

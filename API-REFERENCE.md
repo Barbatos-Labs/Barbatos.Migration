@@ -54,7 +54,6 @@ Contains the migration engine and everything a provider or host needs to talk to
 | [`MigrationException`](#migrationexception-class) | Thrown when a migration cannot run at all. |
 | [`MigrationPlanException`](#migrationplanexception-class) | Thrown when the registered steps cannot form a valid plan. |
 | [`MigrationLockException`](#migrationlockexception-class) | Thrown when another process is already migrating. |
-| [`MigrationRollbackException`](#migrationrollbackexception-class) | Thrown when a rollback fails. |
 
 ### Structs
 
@@ -641,9 +640,7 @@ The registered steps cannot form a valid plan: duplicate target versions, duplic
 
 Another process is already migrating the same data directory.
 
-#### `MigrationRollbackException` Class
-
-A rollback failed. Carries **`string? BackupDirectory`** — deliberately left on disk, and now the user's only intact copy — plus **`Exception? OriginalError`** and **`Exception? RollbackError`**.
+> A failed rollback is **not** an exception. `RunAsync` returns `MigrationOutcome.RollbackFailed`, with `MigrationResult.RollbackError` and `MigrationResult.BackupDirectory` — the snapshot the engine deliberately leaves on disk — filled in. The case where the application most needs to act deliberately is the worst one to express as something a caller can forget to catch.
 
 ---
 

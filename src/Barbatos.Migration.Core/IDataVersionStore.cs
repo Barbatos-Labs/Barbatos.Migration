@@ -96,11 +96,15 @@ public sealed class FileDataVersionStore : IDataVersionStore
         ArgumentNullException.ThrowIfNull(version);
 
         // Steps accumulate across runs: the ledger is the full history of what this copy of the
-        // data has been through, not just the last run.
+        // data has been through, not just the last run. The set is what keeps appending to it
+        // linear - a scan of the list per candidate would make stamping quadratic in the number
+        // of steps an application has ever shipped, which is the number that only ever grows.
         List<string> steps = [.. ReadAppliedStepIds()];
+        HashSet<string> seen = new(steps, StringComparer.Ordinal);
+
         foreach (string id in appliedStepIds ?? (IReadOnlyList<string>)[])
         {
-            if (!steps.Contains(id, StringComparer.Ordinal))
+            if (seen.Add(id))
                 steps.Add(id);
         }
 
